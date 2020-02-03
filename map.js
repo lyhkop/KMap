@@ -1,5 +1,6 @@
 import { Cartesian } from "./cartesian.js";
 import { Tile } from "./tile.js";
+import { Geographica } from "./geographica.js";
 
 const EarthRadius = 6378137;  
 const MinLatitude = -85.05112878;  
@@ -16,6 +17,7 @@ function mapSize(levelOfDetail)
     return (256 << levelOfDetail);  
 }  
 
+// 经纬度转地图像素坐标（经纬度=》墨卡托=》指定LOD地图像素坐标）
 function latLongToPixelXY(latitude, longitude, levelOfDetail) {
 
     latitude = clip(latitude, MinLatitude, MaxLatitude);  
@@ -32,6 +34,19 @@ function latLongToPixelXY(latitude, longitude, levelOfDetail) {
     return new Cartesian(pixelX, pixelY);
 }
 
+function pixelXYToLatLong(pixelX, pixelY, levelOfDetail)  
+{  
+    let mapPxileSize = mapSize(levelOfDetail);  
+    let x = (clip(pixelX, 0, mapPxileSize - 1) / mapPxileSize) - 0.5;  
+    let y = 0.5 - (clip(pixelY, 0, mapPxileSize - 1) / mapPxileSize);  
+
+    let latitude = 90 - 360 * Math.atan(Math.exp(-y * 2 * Math.PI)) / Math.PI;  
+    let longitude = 360 * x;
+
+    return new Geographica(longitude, latitude);
+} 
+
+// 地图像素坐标转瓦片坐标（确定地图像素落在哪个瓦片中）
 function pixelXYToTileXY(pixelX, pixelY, tileRange)  
 {  
     let tileX = clip(Math.floor(pixelX / 256), 0, tileRange); 
@@ -40,6 +55,7 @@ function pixelXYToTileXY(pixelX, pixelY, tileRange)
     return new Cartesian(tileX, tileY);
 }
 
+// 瓦片坐标转bingmap瓦片地图的四叉树编码
 function tileXYToQuadKey(tileX, tileY, levelOfDetail) {
     let quadkey = '';
     for (let i = levelOfDetail; i >=0; --i) {
@@ -56,7 +72,7 @@ function tileXYToQuadKey(tileX, tileY, levelOfDetail) {
         quadkey += digit;
     }
     return quadkey;
-}
+} 
 
 class Map {
 
@@ -69,6 +85,8 @@ class Map {
         mapCanvas.style = "background-color: blue";
         document.body.appendChild(mapCanvas);
         const ctx = mapCanvas.getContext('2d');
+
+        this.mapCanvas = mapCanvas;
 
         this.width = width;
         
@@ -136,15 +154,23 @@ class Map {
             }
         }
 
+
+        // 清空画布
+        this.context.clearRect(0, 0, this.mapCanvas.width, this.mapCanvas.height);
+
+
         // 加载并绘制瓦片图片
         for (let i = 0; i < this.tilesQueue.length; i++) {
             let tile = this.tilesQueue[i];
             tile.drawTileImage(this);
             //tile.drawDebugLabel(this);
         }
+    }
 
+    updateState() {
 
-
+        let center = pixelXYToLatLong(this.pixelCenter.x, this.pixelCenter.y, this.levelOfDetail);
+        this.center = center;
     }
 
 }

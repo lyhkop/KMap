@@ -36,9 +36,9 @@ function latLongToPixelXY(latitude, longitude, levelOfDetail) {
 
 function pixelXYToLatLong(pixelX, pixelY, levelOfDetail)  
 {  
-    let mapPxileSize = mapSize(levelOfDetail);  
-    let x = (clip(pixelX, 0, mapPxileSize - 1) / mapPxileSize) - 0.5;  
-    let y = 0.5 - (clip(pixelY, 0, mapPxileSize - 1) / mapPxileSize);  
+    let mapPxileSize = mapSize(levelOfDetail); 
+    let x = (clip(pixelX, 0, mapPxileSize - 1) / mapPxileSize) - 0.5;
+    let y = 0.5 - (clip(pixelY, 0, mapPxileSize - 1) / mapPxileSize);
 
     let latitude = 90 - 360 * Math.atan(Math.exp(-y * 2 * Math.PI)) / Math.PI;  
     let longitude = 360 * x;
@@ -154,11 +154,6 @@ class Map {
             }
         }
 
-
-        // 清空画布
-        this.context.clearRect(0, 0, this.mapCanvas.width, this.mapCanvas.height);
-
-
         // 加载并绘制瓦片图片
         for (let i = 0; i < this.tilesQueue.length; i++) {
             let tile = this.tilesQueue[i];
@@ -169,6 +164,8 @@ class Map {
 
     updateState() {
 
+        // 修改地图中心点的经纬度坐标
+        // 通过中心点的地图像素坐标更新地图中心点经纬度坐标
         let center = pixelXYToLatLong(this.pixelCenter.x, this.pixelCenter.y, this.levelOfDetail);
         this.center = center;
     }
